@@ -81,6 +81,27 @@ void Wheel::_update_speed()
     }
     speed = cumulated_speed / (WHEEL_POSITION_BUFFER_SIZE-1) ;
 }
+void Wheel::start() { digitalWrite(ena,HIGH);}
+
+void Wheel::stop() { digitalWrite(ena,LOW);}
+
+uint8_t Wheel::getPinA() {return pina ; }
+
+uint8_t Wheel::getPinB() {return pinb ; }
+
+void Wheel::_on_change()
+{
+    unsigned char result = _internal_rotary_object.process()  ;
+    if (result == DIR_CW) {
+        encoder_position ++ ;
+        Serial.println(encoder_position);
+    } 
+    else if (result == DIR_CCW) {
+        encoder_position -- ;
+        Serial.println(encoder_position);
+    }
+    _update_buffers(encoder_position,time(nullptr)) ;
+}
 
 // void update_buffers(Wheel* wheel_ptr,long long value,time_t t) 
 // {

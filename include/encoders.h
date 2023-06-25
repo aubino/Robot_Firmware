@@ -29,6 +29,9 @@ class Wheel
         void _update_speed(); 
         void start();
         void stop() ;
+        void _on_change() ; 
+        uint8_t getPinA() ;
+        uint8_t getPinB() ;
 
     private : 
         volatile long long encoder_position;

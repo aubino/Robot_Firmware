@@ -8,13 +8,14 @@
 #include "ressources.h"
 
 #define LED 2
+hw_timer_t* speed_sampler_timer = NULL;
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  pinMode(LED, OUTPUT);
-  left_wheel.setup(false) ;
-  right_wheel.setup(false) ; 
+  left_wheel.setup() ;
+  attachInterrupt(left_wheel.getPinA(),on_change_left,CHANGE);
+  speed_sampler_timer = timerBegin(0,DEFAULT_WHEEL_COMMAND_FREQUENCY,true);
+  timerAttachInterrupt(speed_sampler_timer, &update_left_wheel_speed,true) ;
+
 }
 
 void loop() {
@@ -26,3 +27,4 @@ void loop() {
   Serial.println("LED is off");
   delay(1000);
 }
+
