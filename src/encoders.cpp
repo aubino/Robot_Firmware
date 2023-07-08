@@ -42,14 +42,16 @@ void Wheel::setup(int pwm_duty_cycle ,float wheel_command_frequency)
 
 void Wheel::applyVoltage(float voltage)
 {
+    int pulse_to_apply = int(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE) ; 
     if (voltage > 0) 
     {
-        int pulse_to_apply = int(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE) ; 
+        setClockWiseRotation() ; 
         analogWrite(pwm,pulse_to_apply);
     }
     else 
     {
-        log_e("The ratio of speed asked for wheel is negative") ;
+        setCounterClockWiseRotation();
+        analogWrite(pwm,pulse_to_apply); 
     }
 }
 
