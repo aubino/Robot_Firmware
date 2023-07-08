@@ -1,6 +1,6 @@
 #define WHEEL_POSITION_BUFFER_SIZE 16
 #define MAX_BUFFER_SIZE 20
-#define PWM_RESOLUTION 255
+#define PWM_RESOLUTION 255 //bits
 #define BATTERY_VOLTAGE 11.1
 #define DEFAULT_BAUD_RATE 9600 
 #define DEFAULT_WHEEL_COMMAND_FREQUENCY 100
@@ -9,6 +9,9 @@
 #define REPORT_TIME 1 
 #include <time.h>
 #include "Rotary.h"
+#include "cmath"
+//constexpr int  PWM_MAX_VALUE = std::pow(2,PWM_RESOLUTION) - 1 ; 
+
 
 #ifndef encoders_h
 #define encoders_h
