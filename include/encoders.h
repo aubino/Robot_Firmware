@@ -6,6 +6,7 @@
 #define DEFAULT_WHEEL_COMMAND_FREQUENCY 100
 #define MATH_PI  3.14159265359
 #define DEFAULT_PWM_DUTY_CYCLE 2000 //ms
+#define REPORT_TIME 1 
 #include <time.h>
 #include "Rotary.h"
 
@@ -19,7 +20,7 @@ typedef struct CircularBuffer
     volatile long long int   internal_buffer[MAX_BUFFER_SIZE];
     int current_index ;
     size_t buffer_size ;
-    CircularBuffer(size_t size) : current_index(0),buffer_size(size) , internal_buffer({0})
+    CircularBuffer(size_t size) : current_index(0),buffer_size(size) , internal_buffer{}
     {
 
     }
@@ -33,6 +34,24 @@ typedef struct CircularBuffer
     }
 
 } CircularBuffer ; 
+
+typedef struct TimeCircularBuffer
+{   
+    unsigned long  internal_buffer[MAX_BUFFER_SIZE];
+    int current_index ;
+    size_t buffer_size ;
+    TimeCircularBuffer(size_t size) : current_index(0),buffer_size(size) , internal_buffer{}
+    {}
+    void push(unsigned long value)
+    {
+        if(current_index == WHEEL_POSITION_BUFFER_SIZE)
+            current_index = 0 ;
+        else
+            current_index ++ ;
+            internal_buffer[current_index] = value ; 
+    }
+} TimeCircularBuffer ; 
+
 
 
 class Wheel 
@@ -59,6 +78,8 @@ class Wheel
         uint8_t getPinB() ;
         long long int  getPosition() ;
         CircularBuffer position_buffer ;
+        TimeCircularBuffer timer_buffer ; 
+
 
     private : 
         volatile long long int encoder_position;

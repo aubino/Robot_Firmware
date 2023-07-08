@@ -18,7 +18,8 @@ Wheel::Wheel(unsigned int pin_a ,
                 ena(enable_pin) , 
                 _internal_rotary_object(pin_a,pin_b), 
                 position_buffer(WHEEL_POSITION_BUFFER_SIZE),
-                encoder_position(0),
+                timer_buffer(WHEEL_POSITION_BUFFER_SIZE),
+                encoder_position{},
                 reduction_factor(reduction)
 {
 }
@@ -68,7 +69,8 @@ double Wheel::getSpeed() {return speed ;}
 
 void IRAM_ATTR Wheel::_update_buffers()
 {
-    position_buffer.push(encoder_position) ; 
+    position_buffer.push(encoder_position) ;
+    timer_buffer.push(millis()) ; 
     return ;
 }
 
@@ -76,7 +78,7 @@ void Wheel::_update_speed()
 {
     // speed is in radiant per second
     // we first compute the time difference for each buffer position of the buffer (in second)
-    int  inv_dt = DEFAULT_WHEEL_COMMAND_FREQUENCY ; // (speed = (position1-position0)/ dt) 
+    double  inv_dt = DEFAULT_WHEEL_COMMAND_FREQUENCY ; // (speed = (position1-position0)/ dt) 
     // the buffer has two potential parts
     // from 0 to current_index
     // And from current_index to size

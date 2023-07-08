@@ -32,6 +32,13 @@ void  report_wheel_pose(Wheel* wheel_ptr)
     Serial.print(wheel_ptr->position_buffer.internal_buffer[i]) ; 
     Serial.write("\t");
   }
+  
+  for(int i = 0; i<wheel_ptr->timer_buffer.buffer_size ; i++)
+  {
+    Serial.print(wheel_ptr->timer_buffer.internal_buffer[i]) ; 
+    Serial.write("\t");
+  }
+  
   Serial.write("\n");
   Serial.write("End of reports \n");
 }
