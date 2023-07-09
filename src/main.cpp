@@ -3,20 +3,37 @@
 #include "encoders.h"
 #include "esp_timer.h"
 #include <ESP32TimerInterrupt.h>
+#include "servoing.h"
 
 #define PWM 16
 #define TIMER0_INTERVAL_MS        1
 #define DEBOUNCING_INTERVAL_MS    80
 
 Wheel left_wheel(18,19,17,5,16,16,30) ;/*, right_wheel(0,1,2,3,4,5)*/ 
-
+double left_wheel_error_sum = 0 ; 
+double left_wheel_command = 0 ; 
+double left_wheel_past_speed = 0 ; 
 auto led_state = HIGH ; 
 
 void IRAM_ATTR on_change_left() { left_wheel._on_change() ;}
 
+
 bool IRAM_ATTR update_left_wheel_buffer(void * timerNo) { left_wheel._update_buffers() ; return true ; } 
 
+
 bool IRAM_ATTR update_left_wheel_speed(void * timerNo) { left_wheel._update_speed() ; return true ; } 
+
+
+bool IRAM_ATTR get_command(void* timerNo)
+{
+  left_wheel_command = proportinnal_command(3.14,
+                          left_wheel_past_speed,
+                          left_wheel.getSpeed(), 
+                          &left_wheel_error_sum) ;
+  left_wheel_past_speed = left_wheel.getSpeed() ; 
+  return true ; 
+}
+
 
 void  report_wheel_pose(Wheel* wheel_ptr)
 {
@@ -32,7 +49,7 @@ void  report_wheel_pose(Wheel* wheel_ptr)
     Serial.print(wheel_ptr->position_buffer.internal_buffer[i]) ; 
     Serial.write("\t");
   }
-  
+  Serial.write("\n");
   for(int i = 0; i<wheel_ptr->timer_buffer.buffer_size ; i++)
   {
     Serial.print(wheel_ptr->timer_buffer.internal_buffer[i]) ; 
@@ -50,8 +67,8 @@ ESP32Timer left_speed_sampler(0);
 void setup() {
   Serial.begin(115200) ;
   left_wheel.setup() ;
-  pinMode(LED_BUILTIN,OUTPUT);
-  // left_wheel.applyVoltage(3.0) ; 
+  // left_wheel.applyVoltage(3.0) ;
+  //ledcSetup() 
   attachInterrupt(left_wheel.getPinA(),on_change_left,CHANGE) ;
   attachInterrupt(left_wheel.getPinB(),on_change_left,CHANGE) ;
   if (left_speed_sampler.attachInterruptInterval(TIMER0_INTERVAL_MS*1000000/DEFAULT_WHEEL_COMMAND_FREQUENCY,update_left_wheel_buffer))
@@ -63,7 +80,7 @@ void setup() {
 		Serial.println(F("Can't set ITimer0. Select another freq. or timer"));
 
 	Serial.flush();
-
+  left_wheel.applyVoltage(-3.0) ;
   // speed_sampler_timer = timerBegin(0,DEFAULT_WHEEL_COMMAND_FREQUENCY,true);
 }
 

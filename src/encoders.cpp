@@ -42,7 +42,7 @@ void Wheel::setup(int pwm_duty_cycle ,float wheel_command_frequency)
 
 void Wheel::applyVoltage(float voltage)
 {
-    int pulse_to_apply = int(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE) ; 
+    int pulse_to_apply = int(abs(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE)) ; 
     if (voltage > 0) 
     {
         setClockWiseRotation() ; 
