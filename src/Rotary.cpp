@@ -150,3 +150,7 @@ unsigned char Rotary::process() {
   // Return emit bits, ie the generated event.
   return state & 0x30;
 }
+
+Rotary::Rotary(){}
+
+

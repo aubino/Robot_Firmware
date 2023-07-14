@@ -3,116 +3,149 @@
 #include "esp32-hal-ledc.h"
 #include "esp32-hal-log.h"
 
-Wheel::Wheel(unsigned int pin_a ,  
-            unsigned int pin_b, 
-            unsigned int c1,
-            unsigned int c2 ,
-            unsigned int pwm_pin,
-            unsigned int enable_pin,
-            double reduction) : 
-                pina(pin_a) , 
-                pinb(pin_b) , 
-                c1(c1) , 
-                c2(c2) ,
-                pwm(pwm_pin), 
-                ena(enable_pin) , 
-                _internal_rotary_object(pin_a,pin_b), 
-                position_buffer(WHEEL_POSITION_BUFFER_SIZE),
-                timer_buffer(WHEEL_POSITION_BUFFER_SIZE),
-                encoder_position{},
-                reduction_factor(reduction)
+
+void initWheel(
+    Wheel * wheel_ptr , 
+    unsigned int pin_a ,  
+    unsigned int pin_b, 
+    unsigned int c1,
+    unsigned int c2 ,
+    unsigned int pwm_pin,
+    unsigned int enable_pin,
+    double reduction)
 {
+    wheel_ptr->pina = pin_a ; 
+    wheel_ptr->pinb = pin_b ; 
+    wheel_ptr->c1 = c1 ; 
+    wheel_ptr->c2 = c2 ;
+    wheel_ptr->pwm = pwm_pin ;
+    wheel_ptr->ena = enable_pin ; 
+    wheel_ptr->_internal_rotary_object = Rotary(pin_a,pin_b) ; 
+    initCircularBuffer(&wheel_ptr->position_buffer,WHEEL_POSITION_BUFFER_SIZE) ;
+    initTimeCircularBuffer(&wheel_ptr->timer_buffer,WHEEL_POSITION_BUFFER_SIZE) ; 
+    wheel_ptr->encoder_position = 0 ;
+    wheel_ptr->reduction_factor = reduction ;  
+    wheel_ptr->speed = 0 ; 
+    wheel_ptr->minimum_coder_tick_to_compute_speed = MINIMUM_SPEED_TICK_TO_COMPUTE_SPEED ; 
+    return ; 
 }
 
-void Wheel::setup(int pwm_duty_cycle ,float wheel_command_frequency) 
+double getRadiantPosition(Wheel * wheel_ptr) 
 {
-    if(digitalPinIsValid(pina) && digitalPinIsValid(pinb))
+    return (wheel_ptr->encoder_position/wheel_ptr->reduction_factor) * 2 * MATH_PI ;
+}
+
+void initCircularBuffer(CircularBuffer* circular_buffer_ptr,size_t size)
+{
+    circular_buffer_ptr->current_index = 0 ; 
+    circular_buffer_ptr->buffer_size = size ; 
+    for(int i =0 ; i<circular_buffer_ptr->buffer_size ; i++)
+        circular_buffer_ptr->internal_buffer[i] = 0 ;
+}
+
+void initTimeCircularBuffer(TimeCircularBuffer* time_circular_buffer_ptr,size_t size) 
+{
+    time_circular_buffer_ptr->current_index = 0 ; 
+    time_circular_buffer_ptr->buffer_size = size ; 
+    for(int i =0 ; i<time_circular_buffer_ptr->buffer_size ; i++)
+        time_circular_buffer_ptr->internal_buffer[i] = 0 ;
+}
+
+void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle,float wheel_command_frequency)
+{
+    if(digitalPinIsValid(wheel_ptr->pina) && digitalPinIsValid(wheel_ptr->pinb))
     {
-        pinMode(pinb,INPUT) ;
-        pinMode(pina,INPUT) ;
-        _internal_rotary_object.setup() ; 
+        pinMode(wheel_ptr->pinb,INPUT) ;
+        pinMode(wheel_ptr->pina,INPUT) ;
+        wheel_ptr->_internal_rotary_object.setup() ; 
         
     }
-    if(digitalPinIsValid(c1))
-        pinMode(c1,OUTPUT) ; 
-    if(digitalPinIsValid(c2))
-        pinMode(c2,OUTPUT) ; 
-    
+    if(digitalPinIsValid(wheel_ptr->c1))
+        pinMode(wheel_ptr->c1,OUTPUT) ; 
+    if(digitalPinIsValid(wheel_ptr->c2))
+        pinMode(wheel_ptr->c2,OUTPUT) ; 
 }
 
-void Wheel::applyVoltage(float voltage)
+void setWheelClockWiseRotation(Wheel * wheel_ptr) 
+{
+    digitalWrite(wheel_ptr->c1,LOW) ;
+    digitalWrite(wheel_ptr->c2,HIGH);
+}
+
+void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) 
+{
+    digitalWrite(wheel_ptr->c1,LOW) ;
+    digitalWrite(wheel_ptr->c2,HIGH); 
+}
+
+void applyVoltageToWheel(Wheel * wheel_ptr,float voltage)
 {
     int pulse_to_apply = int(abs(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE)) ; 
     if (voltage > 0) 
     {
-        setClockWiseRotation() ; 
-        analogWrite(pwm,pulse_to_apply);
+        setWheelClockWiseRotation(wheel_ptr) ; 
+        analogWrite(wheel_ptr->pwm,pulse_to_apply);
     }
     else 
     {
-        setCounterClockWiseRotation();
-        analogWrite(pwm,pulse_to_apply); 
+        setWheelCounterClockWiseRotation(wheel_ptr) ;
+        analogWrite(wheel_ptr->pwm,pulse_to_apply) ; 
     }
 }
 
-void Wheel::setClockWiseRotation()
+void  IRAM_ATTR updateWheelBuffers(Wheel * wheel_ptr)
 {
-    digitalWrite(c2,LOW) ;
-    digitalWrite(c1,HIGH); 
+    wheel_ptr->position_buffer.push(wheel_ptr->encoder_position) ;
+    wheel_ptr->timer_buffer.push(millis()) ; 
 }
 
-void Wheel::setCounterClockWiseRotation()
+void stopWheel(Wheel * wheel_ptr) 
 {
-    digitalWrite(c1,LOW) ;
-    digitalWrite(c2,HIGH); 
+    digitalWrite(wheel_ptr->ena,LOW);
 }
 
-double Wheel::getSpeed() {return speed ;}
-
-void IRAM_ATTR Wheel::_update_buffers()
+void IRAM_ATTR onWheelInterrupt(Wheel* wheel_ptr)
 {
-    position_buffer.push(encoder_position) ;
-    timer_buffer.push(millis()) ; 
-    return ;
-}
-
-void Wheel::_update_speed()
-{
-    // speed is in radiant per second
-    // we first compute the time difference for each buffer position of the buffer (in second)
-    double  inv_dt = DEFAULT_WHEEL_COMMAND_FREQUENCY ; // (speed = (position1-position0)/ dt) 
-    // the buffer has two potential parts
-    // from 0 to current_index
-    // And from current_index to size
-    // so we walk through it in two steps 
-    // first from current_index to 0 
-    // and then from size-1 to current_index +1
-    double cumulated_speed = 0 ;
-    for(int i =position_buffer.current_index ; i>=1   ; i--)
-        cumulated_speed += (position_buffer.internal_buffer[i]-position_buffer.internal_buffer[i-1]) * inv_dt ; 
-    for(int i = position_buffer.buffer_size-1 ; i > position_buffer.current_index ; i--)
-        cumulated_speed += (position_buffer.internal_buffer[i] - position_buffer.internal_buffer[i-1]) * inv_dt ;
-    double speed_in_tick_per_second = cumulated_speed /position_buffer.buffer_size ; // here is the pure speed in ticks per second. since speed_in_tick_per_second/speed = reduction 
-    double speed_in_turn_per_second = speed_in_tick_per_second / reduction_factor ; 
-    speed = speed_in_turn_per_second * 2 * MATH_PI ;  // and there is speed in rad/s
-}
-
-void Wheel::start() { digitalWrite(ena,HIGH);}
-
-void Wheel::stop() { digitalWrite(ena,LOW);}
-
-uint8_t Wheel::getPinA() {return pina ; }
-
-uint8_t Wheel::getPinB() {return pinb ; }
-
-long long int  Wheel::getPosition(){return encoder_position ; }
-
-void IRAM_ATTR Wheel::_on_change()
-{
-    unsigned char result = _internal_rotary_object.process()  ;
+    unsigned char result = wheel_ptr->_internal_rotary_object.process()  ;
     if (result == DIR_CW)
-        encoder_position ++ ;
-    else if (result == DIR_CCW) 
-        encoder_position -- ;
+    {
+        portENTER_CRITICAL_ISR(&spinlock) ; 
+        wheel_ptr->encoder_position ++ ;
+        portEXIT_CRITICAL_ISR(&spinlock) ; 
+    }
+    else if (result == DIR_CCW)
+    {
+        portENTER_CRITICAL_ISR(&spinlock) ; 
+        wheel_ptr->encoder_position -- ;
+        portEXIT_CRITICAL_ISR(&spinlock) ; 
+    } 
 }
+
+void  IRAM_ATTR updateWheelSpeed(Wheel * wheel_ptr)
+{
+    int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
+    for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
+    {
+        if((wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
+        {
+            min_diff_index = i ;
+            double tick_speed = (wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] - wheel_ptr->position_buffer.internal_buffer[min_diff_index]) / (wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] - wheel_ptr->timer_buffer.internal_buffer[min_diff_index]) ; 
+            double speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
+            portENTER_CRITICAL(&spinlock) ; 
+            wheel_ptr->speed = speed ; 
+            portEXIT_CRITICAL(&spinlock) ; 
+            return ; 
+        }
+    }
+}
+
+Wheel::Wheel(){}
+
+CircularBuffer::CircularBuffer(){} 
+
+TimeCircularBuffer::TimeCircularBuffer(){}
+
+
+
+
 

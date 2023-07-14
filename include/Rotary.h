@@ -25,6 +25,7 @@ class Rotary
 {
   public:
     Rotary(char, char);
+    Rotary() ;
     void setup() ;
     // Process pin(s)
     unsigned char process();
@@ -35,4 +36,4 @@ class Rotary
 };
 
 #endif
- 
+
