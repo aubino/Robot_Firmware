@@ -2,7 +2,6 @@
 #include "Rotary.h"
 #include "encoders.h"
 #include "esp_timer.h"
-#include <ESP32TimerInterrupt.h>
 #include "freertos/task.h"
 #include "freertos/timers.h"
 #include "servoing.h"

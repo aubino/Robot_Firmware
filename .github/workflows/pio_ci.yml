@@ -19,7 +19,7 @@ jobs:
           python-version: '3.9'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
-      - name: Build PlatformIO examples
+      - name: Build main firmaware.
         run: pio ci --lib="." --board=esp32doit-devkit-v1
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.example }}
