@@ -48,7 +48,7 @@ void initTimeCircularBuffer(TimeCircularBuffer* time_circular_buffer_ptr,size_t 
     time_circular_buffer_ptr->current_index = 0 ; 
     time_circular_buffer_ptr->buffer_size = size ; 
     for(int i =0 ; i<time_circular_buffer_ptr->buffer_size ; i++)
-        time_circular_buffer_ptr->internal_buffer[i] = 0 ;
+        time_circular_buffer_ptr->internal_buffer[i] = i ;
 }
 
 void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle,float wheel_command_frequency)
@@ -96,7 +96,8 @@ void applyVoltageToWheel(Wheel * wheel_ptr,float voltage)
 void  IRAM_ATTR updateWheelBuffers(Wheel * wheel_ptr)
 {
     wheel_ptr->position_buffer.push(wheel_ptr->encoder_position) ;
-    wheel_ptr->timer_buffer.push(millis()) ; 
+    wheel_ptr->timer_buffer.push(millis()) ;
+    // wheel_ptr->timer_buffer.push(xTaskGetTickCountFromISR()) ; 
 }
 
 void stopWheel(Wheel * wheel_ptr) 
@@ -121,22 +122,35 @@ void IRAM_ATTR onWheelInterrupt(Wheel* wheel_ptr)
     } 
 }
 
-void  IRAM_ATTR updateWheelSpeed(Wheel * wheel_ptr)
+void  updateWheelSpeed(Wheel * wheel_ptr)
 {
     int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
+    long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
+    long long int min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
+    unsigned long current_time = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ;
+    unsigned long min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
     for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
     {
         if((wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
         {
             min_diff_index = i ;
-            double tick_speed = (wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] - wheel_ptr->position_buffer.internal_buffer[min_diff_index]) / (wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] - wheel_ptr->timer_buffer.internal_buffer[min_diff_index]) ; 
-            double speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
-            portENTER_CRITICAL(&spinlock) ; 
-            wheel_ptr->speed = speed ; 
-            portEXIT_CRITICAL(&spinlock) ; 
-            return ; 
+            break; 
         }
     }
+    double tick_speed = (current_position - min_diff_position ) / (current_time-min_diff_time) ; 
+    double _speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
+    // Serial.print("Callback spped update Begin ============================== \n") ; 
+    // Serial.print((String)"current_index : " + wheel_ptr->position_buffer.current_index + "\n") ; 
+    // Serial.print((String)"min_diff_index : " + min_diff_index + "\n") ; 
+    // Serial.print((String)"calculated speed : " + _speed + "\n") ; 
+    // Serial.print((String)"Curent position  : " + current_position + "\n") ; 
+    // Serial.print((String)"min_diff_position : " + min_diff_position + "\n") ; 
+    // Serial.print((String)"current_time : " + current_time + "\n") ; 
+    // Serial.print((String)"min_diff_time : " + min_diff_time + "\n") ; 
+    // portENTER_CRITICAL(&spinlock) ; 
+    wheel_ptr->speed = _speed ; 
+    // portEXIT_CRITICAL(&spinlock) ; 
+    return ; 
 }
 
 Wheel::Wheel(){}

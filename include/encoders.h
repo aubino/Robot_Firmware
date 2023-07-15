@@ -12,14 +12,13 @@
 #include "Rotary.h"
 #include "cmath"
 #include "freertos/semphr.h"
-static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED ; 
 //constexpr int  PWM_MAX_VALUE = std::pow(2,PWM_RESOLUTION) - 1 ; 
 
 
 #ifndef encoders_h
 #define encoders_h
 //#define DEBUG_MODE 
-
+static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED ; 
 
 typedef struct CircularBuffer
 {
@@ -33,7 +32,7 @@ typedef struct CircularBuffer
     }
     void push(long long int value)
     {
-        if(current_index == WHEEL_POSITION_BUFFER_SIZE)
+        if(current_index == buffer_size)
             current_index = 0 ;
         else
             current_index ++ ;
@@ -44,19 +43,21 @@ typedef struct CircularBuffer
 
 typedef struct TimeCircularBuffer
 {   
+    //TickType_t  internal_buffer[MAX_BUFFER_SIZE];
     unsigned long  internal_buffer[MAX_BUFFER_SIZE];
     int current_index ;
     size_t buffer_size ;
     TimeCircularBuffer() ; 
     TimeCircularBuffer(size_t size) : current_index(0),buffer_size(size) , internal_buffer{}
     {}
+    // void push(TickType_t value)
     void push(unsigned long value)
     {
-        if(current_index == WHEEL_POSITION_BUFFER_SIZE)
+        if(current_index == buffer_size)
             current_index = 0 ;
         else
             current_index ++ ;
-            internal_buffer[current_index] = value ; 
+        internal_buffer[current_index] = value ; 
     }
 } TimeCircularBuffer ; 
 
@@ -83,7 +84,7 @@ void setWheelClockWiseRotation(Wheel * wheel_ptr);
 void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) ;
 void applyVoltageToWheel(Wheel * wheel_ptr,float );
 void stopWheel(Wheel * wheel_ptr)  ; 
-void  IRAM_ATTR updateWheelBuffers(Wheel * wheel_ptr); 
+void  updateWheelBuffers(Wheel * wheel_ptr); 
 void  IRAM_ATTR updateWheelSpeed(Wheel * wheel_ptr);
 void IRAM_ATTR onWheelInterrupt(Wheel * wheel_ptr) ; 
 void initWheel(
