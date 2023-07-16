@@ -27,3 +27,4 @@ The pinout layout is as follows :
 ```
 
 # Software Configuration 
+- For continuous integration and unitests look [here](https://piolabs.com/blog/insights/unit-testing-part-1.html) for PlatformIO instructions . 
