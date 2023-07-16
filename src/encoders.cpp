@@ -139,6 +139,7 @@ void  updateWheelSpeed(Wheel * wheel_ptr)
     }
     double tick_speed = (current_position - min_diff_position ) / (current_time-min_diff_time) ; 
     double _speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
+    printWheelState(wheel_ptr) ; 
     // Serial.print("Callback spped update Begin ============================== \n") ; 
     // Serial.print((String)"current_index : " + wheel_ptr->position_buffer.current_index + "\n") ; 
     // Serial.print((String)"min_diff_index : " + min_diff_index + "\n") ; 
@@ -158,6 +159,33 @@ Wheel::Wheel(){}
 CircularBuffer::CircularBuffer(){} 
 
 TimeCircularBuffer::TimeCircularBuffer(){}
+
+void printWheelState(Wheel* wheel_ptr)
+{
+  Serial.write("Report of the pose \n") ;
+  Serial.print(wheel_ptr->encoder_position) ; 
+  Serial.write("\n");
+  Serial.write("Report of the speed \n") ;
+  Serial.print(wheel_ptr->speed) ; 
+  Serial.write("\n");
+  Serial.write("Report of the buffers \n");
+  for(int i = 0; i<wheel_ptr->position_buffer.buffer_size ; i++)
+  {
+    Serial.print(wheel_ptr->position_buffer.internal_buffer[i]) ; 
+    Serial.write("\t");
+  }
+  Serial.write("\n");
+  for(int i = 0; i<wheel_ptr->timer_buffer.buffer_size ; i++)
+  {
+    Serial.print(wheel_ptr->timer_buffer.internal_buffer[i]) ; 
+    Serial.write("\t");
+  }  
+  Serial.write("\n");
+  Serial.print("Current index ") ; 
+  Serial.print(wheel_ptr->position_buffer.current_index) ; 
+  Serial.write("\n") ;
+  Serial.write("End of reports \n");
+}
 
 
 

@@ -64,40 +64,19 @@ void speedUpdater(void * wheel_ptr)
 It takes a pointer to a `Wheel` object as an argument and prints out the position and timer
 buffers, as well as the current speed of the wheel. This function is useful for debugging and
 monitoring the behavior of the wheel. */
-void report_wheel_pose(void* wheel_ptr)
+
+void wheel_reporting_task(void* wheel_ptr)
 {
   Wheel* wheel_ptr_casted = (Wheel*) wheel_ptr ;
   for(;;) //infinite loop 
   {
-    Serial.write("Report of the pose \n") ;
-    Serial.print(wheel_ptr_casted->encoder_position) ; 
-    Serial.write("\n");
-    Serial.write("Report of the speed \n") ;
-    Serial.print(wheel_ptr_casted->speed) ; 
-    Serial.write("\n");
-    Serial.write("Report of the buffers \n");
-    for(int i = 0; i<wheel_ptr_casted->position_buffer.buffer_size ; i++)
-    {
-      Serial.print(wheel_ptr_casted->position_buffer.internal_buffer[i]) ; 
-      Serial.write("\t");
-    }
-    Serial.write("\n");
-    for(int i = 0; i<wheel_ptr_casted->timer_buffer.buffer_size ; i++)
-    {
-      Serial.print(wheel_ptr_casted->timer_buffer.internal_buffer[i]) ; 
-      Serial.write("\t");
-    }  
-    Serial.write("\n");
-    Serial.print("Current index ") ; 
-    Serial.print(wheel_ptr_casted->position_buffer.current_index) ; 
-    Serial.write("\n") ;
-    Serial.write("End of reports \n");
+    printWheelState(wheel_ptr_casted) ; 
     delay(1000) ; 
   }
 }
 
-// TaskHandle_t leftspeedUpdatingtaskHandle = NULL;
-// TaskHandle_t rightspeedUpdatingtaskHandle = NULL;
+
+
 TaskHandle_t leftspeedReportingtaskHandle = NULL;
 static TimerHandle_t speedUpdatingTimer = NULL ;
 static TimerHandle_t bufferUpdatingTimer = NULL ;  
@@ -114,11 +93,7 @@ void setup() {
   attachInterrupt(left_wheel.pinb,on_change_left,CHANGE) ;
   attachInterrupt(right_wheel.pina,on_change_right,CHANGE);
   attachInterrupt(right_wheel.pinb,on_change_right,CHANGE) ; 
-  // Now since i perform floating point arithmetics in the wheel speed calculation, it might be better to use freeRTOS tasks to 
-  // make those calculations in parallel. at a certain frequency rather than calling them in ISR.
-  // xTaskCreatePinnedToCore(speedUpdater,"LeftWheelSpeedUpdater",1024,(void * )&left_wheel,0,&leftspeedUpdatingtaskHandle,0) ; 
-  // xTaskCreatePinnedToCore(speedUpdater,"RightWheelSpeedUpdater",1024,(void * )&right_wheel,0,&rightspeedUpdatingtaskHandle,0) ;
-  xTaskCreatePinnedToCore(report_wheel_pose,"LeftWheelPoseReporter",1024,(void *)&left_wheel,0,&leftspeedReportingtaskHandle,0) ; 
+  xTaskCreatePinnedToCore(wheel_reporting_task,"LeftWheelPoseReporter",1024,(void *)&left_wheel,0,&leftspeedReportingtaskHandle,0) ; 
   // I plan on using the software timers of FreeRtos(Timer Daemon) because i'm essentially just doing that. and my task priorities are messes up.
   // And also for some obscure reason, IDLE task keeps triggering the watchdog because of the priorities.
   speedUpdatingTimer = xTimerCreate("speedUpdatingTimer", //name of the timer
@@ -132,6 +107,8 @@ void setup() {
                                       pdTRUE , 
                                       (void*) 1,
                                       bufferUpdatingTimerCallback) ; 
+  // Ok long story short, the speed is not updating despite my calculations. 
+  //I figured something is going wrong in the updateWheelSpeed function in encoder.cpp file . 
   
   if(speedUpdatingTimer== NULL)
   {
@@ -157,13 +134,12 @@ void setup() {
     xTimerStart(bufferUpdatingTimer,portMAX_DELAY) ; 
   }
   
-  // vTaskStartScheduler() ; 
+  vTaskStartScheduler() ; 
   applyVoltageToWheel(&left_wheel,4.0); 
   applyVoltageToWheel(&right_wheel,4.0);
 }
 
 void loop() {
-  //Serial.print("Loop is running ") ; 
-  //delay(1000); 
+
 }
 

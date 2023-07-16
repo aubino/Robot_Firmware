@@ -99,5 +99,6 @@ void initWheel(
 double getRadiantPosition(Wheel * wheel_ptr) ; 
 void initCircularBuffer(CircularBuffer* circular_buffer_ptr,size_t size) ;
 void initTimeCircularBuffer(TimeCircularBuffer* time_circular_buffer_ptr,size_t size) ; 
+void printWheelState(Wheel* wheel_ptr);
 
 #endif
