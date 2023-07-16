@@ -28,3 +28,4 @@ The pinout layout is as follows :
 
 # Software Configuration 
 - For continuous integration and unitests look [here](https://piolabs.com/blog/insights/unit-testing-part-1.html) for PlatformIO instructions . 
+- For ros trough wifi : https://registry.platformio.org/libraries/frankjoshua/Rosserial%20Arduino%20Library/examples/Odom/Odom.pde

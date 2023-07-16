@@ -10,13 +10,13 @@
 #ifndef servoing_h
 #define servoing_h
 #define PID_FREQUENCY 50
-#define PID_P 100
-#define PID_I 20
-#define PID_D 10
-#define MAX_I 200.0
-#define MIN_I 200.0
+#define PID_P -0.90
+#define PID_I 0.15
+#define PID_D 0
+#define MAX_I   10000.0
+#define MIN_I   -10000.0
 
-double proportinnal_command(double order, double last_speed, double current_speed,double * error_sum)
+double pid_command(double order, double last_speed, double current_speed,double * error_sum)
 {
     constexpr double Kp = PID_P ; 
     constexpr double Ki = (Kp * PID_I)/(PID_FREQUENCY) ; 

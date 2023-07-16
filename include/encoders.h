@@ -3,7 +3,7 @@
 #define PWM_RESOLUTION 255 //bits
 #define BATTERY_VOLTAGE 11.1
 #define DEFAULT_BAUD_RATE 9600 
-#define DEFAULT_WHEEL_COMMAND_FREQUENCY 100
+#define DEFAULT_WHEEL_COMMAND_FREQUENCY 100 //Hz
 #define MATH_PI  3.14159265359
 #define DEFAULT_PWM_DUTY_CYCLE 2000 //ms
 #define REPORT_TIME 1 
@@ -82,7 +82,7 @@ typedef struct Wheel
 void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle = DEFAULT_PWM_DUTY_CYCLE ,float wheel_command_frequency = DEFAULT_WHEEL_COMMAND_FREQUENCY) ; 
 void setWheelClockWiseRotation(Wheel * wheel_ptr); 
 void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) ;
-void applyVoltageToWheel(Wheel * wheel_ptr,float );
+void applyVoltageToWheel(Wheel * wheel_ptr,double );
 void stopWheel(Wheel * wheel_ptr)  ; 
 void updateWheelBuffers(Wheel * wheel_ptr); 
 void updateWheelSpeed(Wheel * wheel_ptr);

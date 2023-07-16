@@ -74,11 +74,11 @@ void setWheelClockWiseRotation(Wheel * wheel_ptr)
 
 void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) 
 {
-    digitalWrite(wheel_ptr->c1,LOW) ;
-    digitalWrite(wheel_ptr->c2,HIGH); 
+    digitalWrite(wheel_ptr->c1,HIGH) ;
+    digitalWrite(wheel_ptr->c2,LOW); 
 }
 
-void applyVoltageToWheel(Wheel * wheel_ptr,float voltage)
+void applyVoltageToWheel(Wheel * wheel_ptr,double voltage)
 {
     int pulse_to_apply = int(abs(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE)) ; 
     if (voltage > 0) 
@@ -93,7 +93,7 @@ void applyVoltageToWheel(Wheel * wheel_ptr,float voltage)
     }
 }
 
-void  IRAM_ATTR updateWheelBuffers(Wheel * wheel_ptr)
+void updateWheelBuffers(Wheel * wheel_ptr)
 {
     wheel_ptr->position_buffer.push(wheel_ptr->encoder_position) ;
     wheel_ptr->timer_buffer.push(millis()) ;
@@ -124,46 +124,53 @@ void IRAM_ATTR onWheelInterrupt(Wheel* wheel_ptr)
 
 void  updateWheelSpeed(Wheel * wheel_ptr)
 {
-    // int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
-    // long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
-    // long long int min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
-    // unsigned long current_time = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ;
-    // unsigned long min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
-    // for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
-    // {
-        // if((wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
-        // {
-            // min_diff_index = i ;
-            // break; 
-        // }
-    // }
-    // double tick_speed = (current_position - min_diff_position ) / (current_time-min_diff_time) ; 
-    // double _speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
-    // Serial.print("Callback spped update Begin ============================== \n") ; 
+    int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
+    long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
+    long long int min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
+    unsigned long current_time = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ;
+    unsigned long min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
+    for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
+    {
+        if(abs(wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
+        {
+            min_diff_index = i ;
+            break; 
+        }
+    }
+    double d_theta = current_position - min_diff_position ; 
+    double dt = current_time-min_diff_time ; 
+    double tick_speed = d_theta/dt ; 
+    double _speed = 2 * MATH_PI * tick_speed * 1000.0 / wheel_ptr->reduction_factor ; 
+    // Serial.print("Callback speed update Begin ============================== \n") ; 
     // Serial.print((String)"current_index : " + wheel_ptr->position_buffer.current_index + "\n") ; 
     // Serial.print((String)"min_diff_index : " + min_diff_index + "\n") ; 
+    // Serial.print((String)"tick_speed : " + tick_speed + "\n") ; 
     // Serial.print((String)"calculated speed : " + _speed + "\n") ; 
     // Serial.print((String)"Curent position  : " + current_position + "\n") ; 
     // Serial.print((String)"min_diff_position : " + min_diff_position + "\n") ; 
     // Serial.print((String)"current_time : " + current_time + "\n") ; 
     // Serial.print((String)"min_diff_time : " + min_diff_time + "\n") ; 
-    // portENTER_CRITICAL(&spinlock) ; 
-    // wheel_ptr->speed = _speed ; 
-    // portEXIT_CRITICAL(&spinlock) ; 
-    portENTER_CRITICAL(&spinlock) ;
-    int previous_index = wheel_ptr->position_buffer.current_index == 0 ? wheel_ptr->position_buffer.buffer_size-1  : wheel_ptr->position_buffer.current_index - 1  ;
-    volatile long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
-    volatile unsigned long current_time  = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index]  ;
-    volatile long long int previous_position = wheel_ptr->position_buffer.internal_buffer[previous_index] ; 
-    volatile unsigned long previous_time  = wheel_ptr->timer_buffer.internal_buffer[previous_index]  ;
-    double _speed = 2 * MATH_PI * wheel_ptr->reduction_factor * (current_position - previous_position) / (current_time - previous_time) ; 
+    portENTER_CRITICAL(&spinlock) ; 
     wheel_ptr->speed = _speed ; 
     portEXIT_CRITICAL(&spinlock) ; 
-    printWheelState(wheel_ptr) ;
-    Serial.print((String)"current_position : " + current_position +"\n") ;
-    Serial.print((String)"current_time : " + current_time + "\n") ;
-    Serial.print((String)"previous_position : " + previous_position + "\n") ;
-    Serial.print((String)"previous_time : " + previous_time + "\n") ; 
+    // portENTER_CRITICAL(&spinlock) ;
+    // int current_index = wheel_ptr->position_buffer.current_index ; 
+    // int previous_index = current_index == 0 ? wheel_ptr->position_buffer.buffer_size-1  : current_index - 1  ;
+    // volatile long long int current_position = wheel_ptr->position_buffer.internal_buffer[current_index] ; 
+    // volatile unsigned long current_time  = wheel_ptr->timer_buffer.internal_buffer[current_index]  ;
+    // volatile long long int previous_position = wheel_ptr->position_buffer.internal_buffer[previous_index] ; 
+    // volatile unsigned long previous_time  = wheel_ptr->timer_buffer.internal_buffer[previous_index]  ;
+    // double _speed = 2 * MATH_PI * wheel_ptr->reduction_factor * (current_position - previous_position) / (current_time - previous_time) ; 
+    // wheel_ptr->speed = _speed ; 
+    // portEXIT_CRITICAL(&spinlock) ; 
+    // Serial.print("========================================== \n") ;
+    // printWheelState(wheel_ptr) ;
+    // Serial.print((String)"current_index : " + current_index +"\n") ;
+    // Serial.print((String)"current_position : " + current_position +"\n") ;
+    // Serial.print((String)"current_time : " + current_time + "\n") ;
+    // Serial.print((String)"previous_index : " + previous_index +"\n") ;
+    // Serial.print((String)"previous_position : " + previous_position + "\n") ;
+    // Serial.print((String)"previous_time : " + previous_time + "\n") ; 
     return ; 
 }
 
