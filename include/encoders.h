@@ -44,7 +44,7 @@ typedef struct CircularBuffer
 typedef struct TimeCircularBuffer
 {   
     //TickType_t  internal_buffer[MAX_BUFFER_SIZE];
-    unsigned long  internal_buffer[MAX_BUFFER_SIZE];
+    volatile unsigned long  internal_buffer[MAX_BUFFER_SIZE];
     int current_index ;
     size_t buffer_size ;
     TimeCircularBuffer() ; 
@@ -84,8 +84,8 @@ void setWheelClockWiseRotation(Wheel * wheel_ptr);
 void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) ;
 void applyVoltageToWheel(Wheel * wheel_ptr,float );
 void stopWheel(Wheel * wheel_ptr)  ; 
-void  updateWheelBuffers(Wheel * wheel_ptr); 
-void  IRAM_ATTR updateWheelSpeed(Wheel * wheel_ptr);
+void updateWheelBuffers(Wheel * wheel_ptr); 
+void updateWheelSpeed(Wheel * wheel_ptr);
 void IRAM_ATTR onWheelInterrupt(Wheel * wheel_ptr) ; 
 void initWheel(
     Wheel * wheel_ptr , 

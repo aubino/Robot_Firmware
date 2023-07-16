@@ -124,22 +124,21 @@ void IRAM_ATTR onWheelInterrupt(Wheel* wheel_ptr)
 
 void  updateWheelSpeed(Wheel * wheel_ptr)
 {
-    int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
-    long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
-    long long int min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
-    unsigned long current_time = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ;
-    unsigned long min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
-    for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
-    {
-        if((wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
-        {
-            min_diff_index = i ;
-            break; 
-        }
-    }
-    double tick_speed = (current_position - min_diff_position ) / (current_time-min_diff_time) ; 
-    double _speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
-    printWheelState(wheel_ptr) ; 
+    // int min_diff_index = wheel_ptr->position_buffer.current_index == wheel_ptr->position_buffer.buffer_size-1 ? 0 : wheel_ptr->position_buffer.current_index +1 ; 
+    // long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
+    // long long int min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
+    // unsigned long current_time = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ;
+    // unsigned long min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
+    // for(int i = 0  ;  i<wheel_ptr->position_buffer.buffer_size ; i++)
+    // {
+        // if((wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
+        // {
+            // min_diff_index = i ;
+            // break; 
+        // }
+    // }
+    // double tick_speed = (current_position - min_diff_position ) / (current_time-min_diff_time) ; 
+    // double _speed = 2 * MATH_PI * tick_speed / wheel_ptr->reduction_factor ;
     // Serial.print("Callback spped update Begin ============================== \n") ; 
     // Serial.print((String)"current_index : " + wheel_ptr->position_buffer.current_index + "\n") ; 
     // Serial.print((String)"min_diff_index : " + min_diff_index + "\n") ; 
@@ -149,8 +148,22 @@ void  updateWheelSpeed(Wheel * wheel_ptr)
     // Serial.print((String)"current_time : " + current_time + "\n") ; 
     // Serial.print((String)"min_diff_time : " + min_diff_time + "\n") ; 
     // portENTER_CRITICAL(&spinlock) ; 
-    wheel_ptr->speed = _speed ; 
+    // wheel_ptr->speed = _speed ; 
     // portEXIT_CRITICAL(&spinlock) ; 
+    portENTER_CRITICAL(&spinlock) ;
+    int previous_index = wheel_ptr->position_buffer.current_index == 0 ? wheel_ptr->position_buffer.buffer_size-1  : wheel_ptr->position_buffer.current_index - 1  ;
+    volatile long long int current_position = wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index] ; 
+    volatile unsigned long current_time  = wheel_ptr->timer_buffer.internal_buffer[wheel_ptr->position_buffer.current_index]  ;
+    volatile long long int previous_position = wheel_ptr->position_buffer.internal_buffer[previous_index] ; 
+    volatile unsigned long previous_time  = wheel_ptr->timer_buffer.internal_buffer[previous_index]  ;
+    double _speed = 2 * MATH_PI * wheel_ptr->reduction_factor * (current_position - previous_position) / (current_time - previous_time) ; 
+    wheel_ptr->speed = _speed ; 
+    portEXIT_CRITICAL(&spinlock) ; 
+    printWheelState(wheel_ptr) ;
+    Serial.print((String)"current_position : " + current_position +"\n") ;
+    Serial.print((String)"current_time : " + current_time + "\n") ;
+    Serial.print((String)"previous_position : " + previous_position + "\n") ;
+    Serial.print((String)"previous_time : " + previous_time + "\n") ; 
     return ; 
 }
 
