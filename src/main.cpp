@@ -65,8 +65,8 @@ void wheelCommandingTimerCallback(TimerHandle_t xTimer)
   right_wheel_past_speed = right_wheel_ptr->speed ; 
   applyVoltageToWheel(left_wheel_ptr,left_wheel_command) ; 
   applyVoltageToWheel(right_wheel_ptr,right_wheel_command) ; 
-  Serial.print((String)"left_wheel_command : " + left_wheel_command +"\n") ;
-  Serial.print((String)"right_wheel_command : " + right_wheel_command +"\n") ;
+  // Serial.print((String)"left_wheel_command : " + left_wheel_command +"\n") ;
+  // Serial.print((String)"right_wheel_command : " + right_wheel_command +"\n") ;
 }
 
 void bufferUpdatingTimerCallback(TimerHandle_t xTimer)
@@ -125,6 +125,9 @@ static TimerHandle_t wheelCommandingTimer = NULL ;
 
 
 void setup() {
+  delay(5000) ; 
+  Serial.begin(9600) ;
+  Serial.print("Setting up wifi \n") ; 
   setupWiFi();
   nh.initNode() ;
   nh.getHardware()->setConnection(server, serverPort);
@@ -132,9 +135,14 @@ void setup() {
   nh.advertise(right_wheel_data_publisher);
   nh.subscribe(left_wheel_command_sub);
   nh.subscribe(right_wheel_command_sub);
+  left_wheel_data.header.frame_id = "left_wheel_frame"        ; right_wheel_data.header.frame_id = "right_wheel_frame"        ; 
+  left_wheel_data.header.stamp = nh.now()                     ; right_wheel_data.header.stamp = nh.now()                      ; 
+  left_wheel_data.vector.x = 0.0                              ; right_wheel_data.vector.x = 0.0                               ;
+  left_wheel_data.vector.y = 0.0                              ; right_wheel_data.vector.y = 0.0                               ;
+  left_wheel_data.vector.z = 0.0                              ; right_wheel_data.vector.z = 0.0                               ;
+  left_wheel_ros_command.data = 0.0                           ; right_wheel_ros_command.data = 0.0                            ; 
   initWheel(left_wheel_ptr, 17,16,15,2,4,4,210) ;
   initWheel(right_wheel_ptr,12,13,27,26,14,14,210);  
-  Serial.begin(250000) ;
   setup_wheel(&left_wheel) ;
   setup_wheel(&right_wheel) ; 
   attachInterrupt(left_wheel.pina,on_change_left,CHANGE) ;

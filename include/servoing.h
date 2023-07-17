@@ -11,9 +11,9 @@
 #define servoing_h
 #define PID_FREQUENCY 50
 #define PID_P -0.90
-#define PID_I 0.15
-#define PID_D 0
-#define MAX_I   10000.0
+#define PID_I  0.10
+#define PID_D  0
+#define MAX_I    10000.0
 #define MIN_I   -10000.0
 
 double pid_command(double order, double last_speed, double current_speed,double * error_sum)

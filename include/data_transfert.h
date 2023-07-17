@@ -5,10 +5,10 @@
 #include <ros.h>
 #include <std_msgs/Int16.h>
 #include <geometry_msgs/Twist.h>
-IPAddress server(192, 168, 100, 7);
+IPAddress server(10, 42, 0, 1);
 uint16_t serverPort = 11411 ;
 const char*  wifi_ssid = "aubino_wifi" ;
-const char*  wifi_password = "aubino_wifi" ;
+const char*  wifi_password = "X4v1pdCP" ;
 ros::NodeHandle  nh ;
 
 void setupWiFi()
