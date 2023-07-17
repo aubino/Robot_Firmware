@@ -41,8 +41,17 @@ void getRightWheelCommand( const std_msgs::Float64& right_wheel_command_recieved
   right_wheel_ros_command.data = right_wheel_command_recieved.data ; 
 }
 
+void modifyPIDParameters(const geometry_msgs::Vector3& PID_parameters)
+{
+  PID_P = PID_parameters.x ; 
+  PID_I = PID_parameters.y ; 
+  PID_D = PID_parameters.z ; 
+} 
+
 ros::Subscriber<std_msgs::Float64> left_wheel_command_sub("/left_wheel/command/set", &getLeftWheelCommand ); 
-ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand); 
+ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand);
+ros::Subscriber<geometry_msgs::Vector3> pid_param_modification_sub("/PID/set", &modifyPIDParameters);
+
 
 
 void IRAM_ATTR on_change_left() { onWheelInterrupt(&left_wheel) ;}
@@ -133,6 +142,7 @@ void setup() {
   nh.getHardware()->setConnection(server, serverPort);
   nh.advertise(left_wheel_data_publisher);
   nh.advertise(right_wheel_data_publisher);
+  nh.subscribe(pid_param_modification_sub) ; 
   nh.subscribe(left_wheel_command_sub);
   nh.subscribe(right_wheel_command_sub);
   left_wheel_data.header.frame_id = "left_wheel_frame"        ; right_wheel_data.header.frame_id = "right_wheel_frame"        ; 
