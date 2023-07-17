@@ -5,6 +5,10 @@
 #include "freertos/task.h"
 #include "freertos/timers.h"
 #include "servoing.h"
+#include "data_transfert.h"
+#include <geometry_msgs/Vector3Stamped.h> 
+#include <std_msgs/Float64.h>
+#include <std_msgs/Header.h>
 
 #define PWM 16
 #define TIMER0_INTERVAL_MS        1
@@ -21,6 +25,24 @@ double left_wheel_past_speed = 0 ;
 double right_wheel_error_sum = 0 ; 
 double right_wheel_command = 0 ; 
 double right_wheel_past_speed = 0 ; 
+// ------------------------- Ros Parameters Declarations ---------------------------------------//
+geometry_msgs::Vector3Stamped left_wheel_data,right_wheel_data ;
+std_msgs::Float64 left_wheel_ros_command , right_wheel_ros_command ; 
+ros::Publisher left_wheel_data_publisher("/left_wheel/command/get",&left_wheel_data) ; 
+ros::Publisher right_wheel_data_publisher("/right_wheel/command/get",&right_wheel_data) ;
+
+void getLeftWheelCommand( const std_msgs::Float64& left_wheel_command_recieved)
+{
+  left_wheel_ros_command.data = left_wheel_command_recieved.data ; 
+}
+
+void getRightWheelCommand( const std_msgs::Float64& right_wheel_command_recieved)
+{
+  right_wheel_ros_command.data = right_wheel_command_recieved.data ; 
+}
+
+ros::Subscriber<std_msgs::Float64> left_wheel_command_sub("/left_wheel/command/set", &getLeftWheelCommand ); 
+ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand); 
 
 
 void IRAM_ATTR on_change_left() { onWheelInterrupt(&left_wheel) ;}
@@ -31,11 +53,11 @@ void IRAM_ATTR update_wheels_buffers() { updateWheelBuffers(&left_wheel) ; updat
 
 void wheelCommandingTimerCallback(TimerHandle_t xTimer)
 {
-  left_wheel_command = pid_command(2*3.14,
+  left_wheel_command = pid_command(left_wheel_ros_command.data,
                           left_wheel_past_speed,
                           left_wheel.speed, 
                           &left_wheel_error_sum) ;
-  right_wheel_command = pid_command(2*3.14,
+  right_wheel_command = pid_command(right_wheel_ros_command.data,
                           right_wheel_past_speed,
                           right_wheel.speed, 
                           &right_wheel_error_sum) ;
@@ -59,6 +81,11 @@ void speedUpdatingTimerCallback(TimerHandle_t xTimer)
 {
   updateWheelSpeed(left_wheel_ptr);
   updateWheelSpeed(right_wheel_ptr);
+  left_wheel_data.header.frame_id = "left_wheel_frame"        ; right_wheel_data.header.frame_id = "right_wheel_frame"        ; 
+  left_wheel_data.header.stamp = nh.now()                     ; right_wheel_data.header.stamp = nh.now()                      ; 
+  left_wheel_data.vector.x = left_wheel_ptr->speed            ; right_wheel_data.vector.x = right_wheel_ptr->speed            ;
+  left_wheel_data.vector.y = left_wheel_ptr->encoder_position ; right_wheel_data.vector.y = right_wheel_ptr->encoder_position ;
+  left_wheel_data.vector.z = 0.0                              ; right_wheel_data.vector.z = 0.0                               ;
 }
 
 void speedUpdater(void * wheel_ptr)
@@ -98,6 +125,13 @@ static TimerHandle_t wheelCommandingTimer = NULL ;
 
 
 void setup() {
+  setupWiFi();
+  nh.initNode() ;
+  nh.getHardware()->setConnection(server, serverPort);
+  nh.advertise(left_wheel_data_publisher);
+  nh.advertise(right_wheel_data_publisher);
+  nh.subscribe(left_wheel_command_sub);
+  nh.subscribe(right_wheel_command_sub);
   initWheel(left_wheel_ptr, 17,16,15,2,4,4,210) ;
   initWheel(right_wheel_ptr,12,13,27,26,14,14,210);  
   Serial.begin(250000) ;
@@ -170,7 +204,11 @@ void setup() {
   // applyVoltageToWheel(&right_wheel,-6.0);
 }
 
-void loop() {
-
+void loop() 
+{
+  left_wheel_data_publisher.publish(&left_wheel_data) ; 
+  right_wheel_data_publisher.publish(&right_wheel_data) ; 
+  nh.spinOnce();
+  delay(uint32_t((2*1000)/DEFAULT_WHEEL_COMMAND_FREQUENCY)) ; 
 }
 
