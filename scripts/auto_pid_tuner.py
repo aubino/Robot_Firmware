@@ -9,12 +9,12 @@ import pandas as pd
 import yaml
 import os 
 saving_dir = "/home/aubin/pid_report"
-Kp_min = 0
-Kp_max = 10 
-Kp_step = 0.05
+Kp_min = -6.0
+Kp_max = -0.2
+Kp_step = 0.1
 Ki_min = 0
-Ki_max = 10 
-Ki_step = 0.01
+Ki_max = 5 
+Ki_step = 0.1
 Kd_min = -5.0
 Kd_max = 10 
 Kd_step = 0.01
@@ -54,7 +54,6 @@ def mainloop() :
             np.save(os.path.join(saving_dir,np_speeds_file_name,"speeds"),np_speeds)
             np.save(os.path.join(saving_dir,np_times_file_name,"times"),np_times)
     command_pub.publish(Float64(0))
-    
     
 if __name__ == '__main__':
      try:
