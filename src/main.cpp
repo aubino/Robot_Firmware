@@ -99,7 +99,7 @@ void speedUpdatingTimerCallback(TimerHandle_t xTimer)
   /**
    * Before updating the speed, let's computhe the odometry first.
   */
-  odometry = computeOdometry(robot_pose,1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
+  odometry = computeOdometry(robot_pose,nh.now(),1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
   //Now we can update the speed 
   updateWheelSpeed(left_wheel_ptr);
   updateWheelSpeed(right_wheel_ptr);

@@ -3,6 +3,8 @@
 #include <math.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Pose2D.h>
+#include "ros/time.h"
+#include "std_msgs/Time.h"
 #ifndef ODOMETRY_H
 #define ODOMETRY_H
 /// @brief Used to compute the direct kinematics. 
@@ -32,7 +34,8 @@ void computeDirectKinematics(
  * @returns The computed speed in the form of nav_msgs::Odometry
 */
 nav_msgs::Odometry computeOdometry(
-    geometry_msgs::Pose2D& p , 
+    geometry_msgs::Pose2D& p ,
+    ros::Time t ,
     double dt ,
     double left_wheel_speed ,
     double right_wheel_speed

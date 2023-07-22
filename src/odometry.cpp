@@ -43,7 +43,8 @@ void computeInvertKinematics(
 }
 
 nav_msgs::Odometry computeOdometry(
-    geometry_msgs::Pose2D& p, 
+    geometry_msgs::Pose2D& p,
+    ros::Time t ,  
     double dt ,
     double left_wheel_speed ,
     double right_wheel_speed
@@ -56,7 +57,7 @@ nav_msgs::Odometry computeOdometry(
     double delta_th = vth * dt;
     nav_msgs::Odometry result_odom  ; 
     result_odom.header.frame_id = "odom" ; 
-    result_odom.header.stamp = ros::Time::now() ;
+    result_odom.header.stamp = t ;
     result_odom.child_frame_id = "base_link" ; 
     result_odom.pose.pose.position.x = p.x + delta_x ; 
     result_odom.pose.pose.position.y = p.y + delta_y ; 
