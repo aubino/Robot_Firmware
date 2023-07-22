@@ -20,6 +20,6 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Build main firmaware.
-        run: pio ci --lib="." --board=esp32doit-devkit-v1
+        run: pio ci --lib="." --board=esp32doit-devkit-v1 --project-conf
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.example }}

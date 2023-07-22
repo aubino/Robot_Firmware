@@ -7,11 +7,15 @@
 #include "servoing.h"
 #include "data_transfert.h"
 #include <geometry_msgs/Vector3Stamped.h> 
+#include <geometry_msgs/Pose2D.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
-
+#include "odometry.h"
 #define TIMER0_INTERVAL_MS        1
 #define DEBOUNCING_INTERVAL_MS    80
+#define SPEED_UPDATING_FREQUENCY  DEFAULT_WHEEL_COMMAND_FREQUENCY/2
+#define BUFFER_UPDATING_FREQUENCY DEFAULT_WHEEL_COMMAND_FREQUENCY
+#define ROS_PUBLISHING_FREQUENCY  DEFAULT_WHEEL_COMMAND_FREQUENCY/2
 
 /// --------- Here we will define our global variables -----------------------------///
 
@@ -27,8 +31,12 @@ double right_wheel_past_speed = 0 ;
 // ------------------------- Ros Parameters Declarations ---------------------------------------//
 geometry_msgs::Vector3Stamped left_wheel_data,right_wheel_data ;
 std_msgs::Float64 left_wheel_ros_command , right_wheel_ros_command ; 
+nav_msgs::Odometry odometry ; 
+geometry_msgs::Pose2D robot_pose ; 
 ros::Publisher left_wheel_data_publisher("/left_wheel/command/get",&left_wheel_data) ; 
 ros::Publisher right_wheel_data_publisher("/right_wheel/command/get",&right_wheel_data) ;
+ros::Publisher odometry_publisher("/odom",&odometry) ; 
+ros::Publisher robot_pose_publisher("/robot/pose",&robot_pose) ; 
 
 void getLeftWheelCommand( const std_msgs::Float64& left_wheel_command_recieved)
 {
@@ -88,8 +96,14 @@ void bufferUpdatingTimerCallback(TimerHandle_t xTimer)
 
 void speedUpdatingTimerCallback(TimerHandle_t xTimer)
 {
+  /**
+   * Before updating the speed, let's computhe the odometry first.
+  */
+  odometry = computeOdometry(robot_pose,1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
+  //Now we can update the speed 
   updateWheelSpeed(left_wheel_ptr);
   updateWheelSpeed(right_wheel_ptr);
+  // now we update the data to be periodically sent to ros topics
   left_wheel_data.header.frame_id = "left_wheel_frame"        ; right_wheel_data.header.frame_id = "right_wheel_frame"        ; 
   left_wheel_data.header.stamp = nh.now()                     ; right_wheel_data.header.stamp = nh.now()                      ; 
   left_wheel_data.vector.x = left_wheel_ptr->speed            ; right_wheel_data.vector.x = right_wheel_ptr->speed            ;
@@ -163,18 +177,18 @@ void setup() {
   // I plan on using the software timers of FreeRtos(Timer Daemon) because i'm essentially just doing that. and my task priorities are messes up.
   // And also for some obscure reason, IDLE task keeps triggering the watchdog because of the priorities.
   speedUpdatingTimer = xTimerCreate("speedUpdatingTimer", //name of the timer
-                                    (2*1000)/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS), //period of timer in ticks = 50HZ
+                                    1000/(SPEED_UPDATING_FREQUENCY*portTICK_PERIOD_MS), //period of timer in ticks = 50HZ
                                     pdTRUE, // auto reload 
                                     (void*) 0, // timer index
                                     speedUpdatingTimerCallback // Callback function
                                     ) ; 
   bufferUpdatingTimer = xTimerCreate("bufferUpdatingTimer" , 
-                                      1000/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
+                                      1000/(BUFFER_UPDATING_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
                                       pdTRUE , 
                                       (void*) 1,
                                       bufferUpdatingTimerCallback) ; 
   wheelCommandingTimer = xTimerCreate("wheelCommandingTimer" , 
-                                      (1*1000)/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
+                                      1000/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
                                       pdTRUE , 
                                       (void*) 1,
                                       wheelCommandingTimerCallback) ; 
@@ -216,17 +230,16 @@ void setup() {
     Serial.print("Succesfully created Wheel commanding Timer ") ; 
     xTimerStart(wheelCommandingTimer,portMAX_DELAY) ; 
   }
-  //applyVoltageToWheel(left_wheel_ptr,5.0) ;
   // vTaskStartScheduler() ; 
-  // applyVoltageToWheel(&left_wheel, 6.0); 
-  // applyVoltageToWheel(&right_wheel,-6.0);
 }
 
 void loop() 
 {
   left_wheel_data_publisher.publish(&left_wheel_data) ; 
-  right_wheel_data_publisher.publish(&right_wheel_data) ; 
+  right_wheel_data_publisher.publish(&right_wheel_data) ;
+  odometry_publisher.publish(&odometry) ; 
+  robot_pose_publisher.publish(&robot_pose) ;
   nh.spinOnce();
-  delay(uint32_t((2*1000)/DEFAULT_WHEEL_COMMAND_FREQUENCY)) ; 
+  delay(uint32_t(1000/ROS_PUBLISHING_FREQUENCY)) ; 
 }
 

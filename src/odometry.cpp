@@ -43,22 +43,29 @@ void computeInvertKinematics(
 }
 
 nav_msgs::Odometry computeOdometry(
-    double x , 
-    double y ,
-    double theta , 
+    geometry_msgs::Pose2D& p, 
     double dt ,
     double left_wheel_speed ,
     double right_wheel_speed
 ) 
 {
     double vx(0.0), vy(0.0),vth(0.0) ; 
-    computeDirectKinematics(theta,left_wheel_speed,right_wheel_speed,vx,vy,vth) ; 
-    double delta_x = (vx * cos(theta) - vy * sin(theta)) * dt;
-    double delta_y = (vx * sin(theta) + vy * cos(theta)) * dt;
+    computeDirectKinematics(p.theta ,left_wheel_speed,right_wheel_speed,vx,vy,vth) ; 
+    double delta_x = (vx * cos(p.theta) - vy * sin(p.theta)) * dt;
+    double delta_y = (vx * sin(p.theta) + vy * cos(p.theta)) * dt;
     double delta_th = vth * dt;
     nav_msgs::Odometry result_odom  ; 
-    result_odom.header.frame_id = "base_link" ; 
+    result_odom.header.frame_id = "odom" ; 
     result_odom.header.stamp = ros::Time::now() ;
-    result_odom.child_frame_id = "odom" ; 
-    //result_odom.pose.
+    result_odom.child_frame_id = "base_link" ; 
+    result_odom.pose.pose.position.x = p.x + delta_x ; 
+    result_odom.pose.pose.position.y = p.y + delta_y ; 
+    result_odom.pose.pose.position.z = 0.0 ; 
+    result_odom.twist.twist.linear.x = vx;
+    result_odom.twist.twist.linear.y = vy;
+    result_odom.twist.twist.angular.z = vth;
+    // Now we update the new Pose
+    p.x += delta_x ; 
+    p.y += delta_y ; 
+    p.theta += delta_th ;  
 }

@@ -28,5 +28,4 @@ double pid_command(double order, double last_speed, double current_speed,double 
     return Kp * error + Ki * (*error_sum) + Kd * derivate;
 }
 
-
 #endif
