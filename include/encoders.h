@@ -1,22 +1,24 @@
 #define WHEEL_POSITION_BUFFER_SIZE 16
 #define MAX_BUFFER_SIZE 20
-#define PWM_RESOLUTION 255 //bits
+#define PWM_RESOLUTION 16 //bits
+#define PWN_FREQUENCY 10000 //HZ
 #define BATTERY_VOLTAGE 11.1
 #define DEFAULT_BAUD_RATE 9600 
 #define DEFAULT_WHEEL_COMMAND_FREQUENCY 100 //Hz
 #define MATH_PI  3.14159265359
-#define DEFAULT_PWM_DUTY_CYCLE 2000 //ms
 #define REPORT_TIME 1 
 #define MINIMUM_SPEED_TICK_TO_COMPUTE_SPEED 5
 #include <time.h>
 #include "Rotary.h"
-#include "cmath"
+#include <math.h>
 #include "freertos/semphr.h"
-//constexpr int  PWM_MAX_VALUE = std::pow(2,PWM_RESOLUTION) - 1 ; 
+#include "esp32-hal-ledc.h"
 
 
 #ifndef encoders_h
 #define encoders_h
+const int  PWM_MAX_VALUE = std::pow(2,PWM_RESOLUTION) - 1 ; 
+
 //#define DEBUG_MODE 
 static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED ; 
 
@@ -79,7 +81,7 @@ typedef struct Wheel
     Wheel() ; 
 } Wheel ; 
 
-void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle = DEFAULT_PWM_DUTY_CYCLE ,float wheel_command_frequency = DEFAULT_WHEEL_COMMAND_FREQUENCY) ; 
+void setup_wheel(Wheel * wheel_ptr,float wheel_command_frequency = DEFAULT_WHEEL_COMMAND_FREQUENCY) ; 
 void setWheelClockWiseRotation(Wheel * wheel_ptr); 
 void setWheelCounterClockWiseRotation(Wheel * wheel_ptr) ;
 void applyVoltageToWheel(Wheel * wheel_ptr,double );

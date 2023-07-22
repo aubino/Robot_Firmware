@@ -51,7 +51,7 @@ void initTimeCircularBuffer(TimeCircularBuffer* time_circular_buffer_ptr,size_t 
         time_circular_buffer_ptr->internal_buffer[i] = i ;
 }
 
-void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle,float wheel_command_frequency)
+void setup_wheel(Wheel * wheel_ptr,float wheel_command_frequency)
 {
     if(digitalPinIsValid(wheel_ptr->pina) && digitalPinIsValid(wheel_ptr->pinb))
     {
@@ -63,7 +63,9 @@ void setup_wheel(Wheel * wheel_ptr,int pwm_duty_cycle,float wheel_command_freque
     if(digitalPinIsValid(wheel_ptr->c1))
         pinMode(wheel_ptr->c1,OUTPUT) ; 
     if(digitalPinIsValid(wheel_ptr->c2))
-        pinMode(wheel_ptr->c2,OUTPUT) ; 
+        pinMode(wheel_ptr->c2,OUTPUT) ;
+    pinMode(wheel_ptr->pwm,OUTPUT) ; 
+    //ledcSetup(wheel_ptr->pwm, PWN_FREQUENCY, PWM_RESOLUTION);
 }
 
 void setWheelClockWiseRotation(Wheel * wheel_ptr) 
@@ -80,16 +82,18 @@ void setWheelCounterClockWiseRotation(Wheel * wheel_ptr)
 
 void applyVoltageToWheel(Wheel * wheel_ptr,double voltage)
 {
-    int pulse_to_apply = int(abs(PWM_RESOLUTION * voltage/BATTERY_VOLTAGE)) ; 
+    int pulse_to_apply = int(abs(PWM_MAX_VALUE * voltage/BATTERY_VOLTAGE)) ; 
     if (voltage > 0) 
     {
         setWheelClockWiseRotation(wheel_ptr) ; 
         analogWrite(wheel_ptr->pwm,pulse_to_apply);
+        //ledcWrite(wheel_ptr->pwm, pulse_to_apply); 
     }
     else 
     {
         setWheelCounterClockWiseRotation(wheel_ptr) ;
-        analogWrite(wheel_ptr->pwm,pulse_to_apply) ; 
+        analogWrite(wheel_ptr->pwm,pulse_to_apply) ;
+        //ledcWrite(wheel_ptr->pwm, pulse_to_apply); 
     }
 }
 

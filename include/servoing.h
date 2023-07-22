@@ -9,12 +9,12 @@
 #include "encoders.h"
 #ifndef servoing_h
 #define servoing_h
-#define PID_FREQUENCY 50
+#define PID_FREQUENCY 100
 // #define PID_P -0.90
-// #define PID_I  0.10
+// #define PID_I  0.60
 // #define PID_D  0
-#define MAX_I    10000.0
-#define MIN_I   -10000.0
+#define MAX_I    1000.0
+#define MIN_I   -1000.0
 double PID_P(0) ,PID_I(0) ,  PID_D(0) ; 
 double pid_command(double order, double last_speed, double current_speed,double * error_sum)
 {
@@ -24,7 +24,8 @@ double pid_command(double order, double last_speed, double current_speed,double 
     double error = current_speed - order ; 
     double derivate = current_speed -  last_speed ; 
     *error_sum += error ; 
-    return Kp * error + Ki * max(min(*error_sum,MAX_I),MIN_I) + Kd * derivate; 
+    //return Kp * error + Ki * max(min(*error_sum,MAX_I),MIN_I) + Kd * derivate; 
+    return Kp * error + Ki * (*error_sum) + Kd * derivate;
 }
 
 

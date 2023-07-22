@@ -1,6 +1,7 @@
 
 #include "geometry.h"
 #include <math.h>
+#include "nav_msgs/Odometry.h"
 #ifndef ODOMETRY_H
 #define ODOMETRY_H
 /// @brief Used to compute the direct kinematics. 
@@ -20,7 +21,7 @@ void computeDirectKinematics(
     double& v_theta
 ) ;
 
-void computeOdometry(
+nav_msgs::Odometry computeOdometry(
     double x , 
     double y ,
     double theta , 

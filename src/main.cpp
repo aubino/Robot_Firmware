@@ -10,7 +10,6 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 
-#define PWM 16
 #define TIMER0_INTERVAL_MS        1
 #define DEBOUNCING_INTERVAL_MS    80
 
@@ -73,6 +72,7 @@ void wheelCommandingTimerCallback(TimerHandle_t xTimer)
   left_wheel_past_speed = left_wheel_ptr->speed ; 
   right_wheel_past_speed = right_wheel_ptr->speed ; 
   applyVoltageToWheel(left_wheel_ptr,left_wheel_command) ; 
+  //applyVoltageToWheel(left_wheel_ptr,6.0) ;
   applyVoltageToWheel(right_wheel_ptr,right_wheel_command) ; 
   // Serial.print((String)"left_wheel_command : " + left_wheel_command +"\n") ;
   // Serial.print((String)"right_wheel_command : " + right_wheel_command +"\n") ;
@@ -174,7 +174,7 @@ void setup() {
                                       (void*) 1,
                                       bufferUpdatingTimerCallback) ; 
   wheelCommandingTimer = xTimerCreate("wheelCommandingTimer" , 
-                                      (2*1000)/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 50HZ
+                                      (1*1000)/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
                                       pdTRUE , 
                                       (void*) 1,
                                       wheelCommandingTimerCallback) ; 
@@ -216,7 +216,7 @@ void setup() {
     Serial.print("Succesfully created Wheel commanding Timer ") ; 
     xTimerStart(wheelCommandingTimer,portMAX_DELAY) ; 
   }
-  
+  //applyVoltageToWheel(left_wheel_ptr,5.0) ;
   // vTaskStartScheduler() ; 
   // applyVoltageToWheel(&left_wheel, 6.0); 
   // applyVoltageToWheel(&right_wheel,-6.0);
