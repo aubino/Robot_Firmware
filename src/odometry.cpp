@@ -67,5 +67,6 @@ nav_msgs::Odometry computeOdometry(
     // Now we update the new Pose
     p.x += delta_x ; 
     p.y += delta_y ; 
-    p.theta += delta_th ;  
+    p.theta += delta_th ; 
+    return result_odom ; 
 }
