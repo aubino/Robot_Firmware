@@ -55,9 +55,19 @@ void modifyPIDParameters(const geometry_msgs::Vector3& PID_parameters)
   PID_D = PID_parameters.z ; 
 } 
 
+void setLineraSpeed(const geometry_msgs::Twist& linear_speed)
+{
+  double speed_to_apply_to_left_wheel(0) , speed_to_apply_to_right(0) ; 
+  computeInvertKinematics(robot_pose.theta,linear_speed.linear.x,linear_speed.linear.y,linear_speed.angular.z,speed_to_apply_to_left_wheel,speed_to_apply_to_right) ; 
+  left_wheel_ros_command.data = speed_to_apply_to_left_wheel ; 
+  right_wheel_ros_command.data = speed_to_apply_to_right ; 
+  return ; 
+}
+
 ros::Subscriber<std_msgs::Float64> left_wheel_command_sub("/left_wheel/command/set", &getLeftWheelCommand ); 
 ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand);
 ros::Subscriber<geometry_msgs::Vector3> pid_param_modification_sub("/PID/set", &modifyPIDParameters);
+ros::Subscriber<geometry_msgs::Twist> robot_driving_sub("/robot/cmd_vel",&setLineraSpeed) ; 
 
 
 
@@ -97,7 +107,7 @@ void bufferUpdatingTimerCallback(TimerHandle_t xTimer)
 void speedUpdatingTimerCallback(TimerHandle_t xTimer)
 {
   /**
-   * Before updating the speed, let's computhe the odometry first.
+   * Before updating the speed, let's compute the odometry first.
   */
   odometry = computeOdometry(robot_pose,nh.now(),1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
   //Now we can update the speed 
