@@ -55,7 +55,7 @@ void modifyPIDParameters(const geometry_msgs::Vector3& PID_parameters)
   PID_D = PID_parameters.z ; 
 } 
 
-void setLineraSpeed(const geometry_msgs::Twist& linear_speed)
+void setLinearSpeed(const geometry_msgs::Twist& linear_speed)
 {
   double speed_to_apply_to_left_wheel(0) , speed_to_apply_to_right(0) ; 
   computeInvertKinematics(robot_pose.theta,linear_speed.linear.x,linear_speed.linear.y,linear_speed.angular.z,speed_to_apply_to_left_wheel,speed_to_apply_to_right) ; 
@@ -67,7 +67,7 @@ void setLineraSpeed(const geometry_msgs::Twist& linear_speed)
 ros::Subscriber<std_msgs::Float64> left_wheel_command_sub("/left_wheel/command/set", &getLeftWheelCommand ); 
 ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand);
 ros::Subscriber<geometry_msgs::Vector3> pid_param_modification_sub("/PID/set", &modifyPIDParameters);
-ros::Subscriber<geometry_msgs::Twist> robot_driving_sub("/robot/cmd_vel",&setLineraSpeed) ; 
+ros::Subscriber<geometry_msgs::Twist> robot_driving_sub("/robot/cmd_vel",&setLinearSpeed) ; 
 
 
 
