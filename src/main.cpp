@@ -201,7 +201,7 @@ void setup() {
                                       1000/(DEFAULT_WHEEL_COMMAND_FREQUENCY*portTICK_PERIOD_MS) , //period of timer in ticks = 100HZ
                                       pdTRUE , 
                                       (void*) 1,
-                                      wheelCommandingTimerCallback) ; 
+                                      wheelCommandingTimerCallback) ;
   // Ok long story short, the speed is not updating despite my calculations. 
   //I figured something is going wrong in the updateWheelSpeed function in encoder.cpp file . 
   

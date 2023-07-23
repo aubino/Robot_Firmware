@@ -138,6 +138,8 @@ void  updateWheelSpeed(Wheel * wheel_ptr)
         if(abs(wheel_ptr->position_buffer.internal_buffer[i] - wheel_ptr->position_buffer.internal_buffer[wheel_ptr->position_buffer.current_index])>=wheel_ptr->minimum_coder_tick_to_compute_speed)
         {
             min_diff_index = i ;
+            min_diff_position = wheel_ptr->position_buffer.internal_buffer[min_diff_index] ; 
+            min_diff_time = wheel_ptr->timer_buffer.internal_buffer[min_diff_index] ;
             break; 
         }
     }
@@ -145,36 +147,9 @@ void  updateWheelSpeed(Wheel * wheel_ptr)
     double dt = current_time-min_diff_time ; 
     double tick_speed = d_theta/dt ; 
     double _speed = 2 * MATH_PI * tick_speed * 1000.0 / wheel_ptr->reduction_factor ; 
-    // Serial.print("Callback speed update Begin ============================== \n") ; 
-    // Serial.print((String)"current_index : " + wheel_ptr->position_buffer.current_index + "\n") ; 
-    // Serial.print((String)"min_diff_index : " + min_diff_index + "\n") ; 
-    // Serial.print((String)"tick_speed : " + tick_speed + "\n") ; 
-    // Serial.print((String)"calculated speed : " + _speed + "\n") ; 
-    // Serial.print((String)"Curent position  : " + current_position + "\n") ; 
-    // Serial.print((String)"min_diff_position : " + min_diff_position + "\n") ; 
-    // Serial.print((String)"current_time : " + current_time + "\n") ; 
-    // Serial.print((String)"min_diff_time : " + min_diff_time + "\n") ; 
     portENTER_CRITICAL(&spinlock) ; 
     wheel_ptr->speed = _speed ; 
     portEXIT_CRITICAL(&spinlock) ; 
-    // portENTER_CRITICAL(&spinlock) ;
-    // int current_index = wheel_ptr->position_buffer.current_index ; 
-    // int previous_index = current_index == 0 ? wheel_ptr->position_buffer.buffer_size-1  : current_index - 1  ;
-    // volatile long long int current_position = wheel_ptr->position_buffer.internal_buffer[current_index] ; 
-    // volatile unsigned long current_time  = wheel_ptr->timer_buffer.internal_buffer[current_index]  ;
-    // volatile long long int previous_position = wheel_ptr->position_buffer.internal_buffer[previous_index] ; 
-    // volatile unsigned long previous_time  = wheel_ptr->timer_buffer.internal_buffer[previous_index]  ;
-    // double _speed = 2 * MATH_PI * wheel_ptr->reduction_factor * (current_position - previous_position) / (current_time - previous_time) ; 
-    // wheel_ptr->speed = _speed ; 
-    // portEXIT_CRITICAL(&spinlock) ; 
-    // Serial.print("========================================== \n") ;
-    // printWheelState(wheel_ptr) ;
-    // Serial.print((String)"current_index : " + current_index +"\n") ;
-    // Serial.print((String)"current_position : " + current_position +"\n") ;
-    // Serial.print((String)"current_time : " + current_time + "\n") ;
-    // Serial.print((String)"previous_index : " + previous_index +"\n") ;
-    // Serial.print((String)"previous_position : " + previous_position + "\n") ;
-    // Serial.print((String)"previous_time : " + previous_time + "\n") ; 
     return ; 
 }
 
