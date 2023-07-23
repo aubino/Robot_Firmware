@@ -15,10 +15,12 @@ void setupWiFi()
 {  
    WiFi.begin(wifi_ssid, wifi_password);
    while (WiFi.status() != WL_CONNECTED) { delay(500);Serial.print("."); }
-   Serial.print("WIFI SSID: ");
-   Serial.println(WiFi.SSID());
-   Serial.print("IP ADRESS:   ");
-   Serial.println(WiFi.localIP());
-
+   if(Serial.available())
+   {
+      Serial.print("WIFI SSID: ");
+      Serial.println(WiFi.SSID());
+      Serial.print("IP ADRESS:   ");
+      Serial.println(WiFi.localIP());
+   }
 }
 #endif
