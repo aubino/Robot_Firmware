@@ -1,8 +1,14 @@
 [![Build](https://github.com/aubino/Robot_Firmware/actions/workflows/pio_ci.yml/badge.svg)](https://github.com/aubino/Robot_Firmware/actions/workflows/pio_ci.yml)
 
 # Robot_Firmware
-This package contains the low level firmware of my robot. 
-It is used to drive wheels and poerform a closed loop control over them for now. 
+This package contains the low level firmware of my mobile differential drive robot. 
+This package is able to do the following functions : 
+- Estimate wheel speed for each wheel
+- Perform a closed looped control over the wheels
+- Compute direct and inverse Kinematics
+- Deduce odometry infos
+- Recieve commands through ROS topics with WiFi
+  
 
 # Hardware configuration 
 I use the ESP32 to write this low level firmware, 6V DC motors with quadrature encoders driven by the L289N  H bridge. For Data fusion purposes, i'm also using the __MPU6050__ IMU to extract orientation.  
