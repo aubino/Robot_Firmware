@@ -5,7 +5,31 @@ This package contains the low level firmware of my robot.
 It is used to drive wheels and poerform a closed loop control over them for now. 
 
 # Hardware configuration 
-I use the ESP32 to write this low level firmware, 6V DC motors with quadrature encoders driven by the L289N  H bridge. For Data fusion purposes, i'm also using the __MPU6050__ IMU to extract orientation.  
+- The following hardware are used for the robot : 
+    
+    - An ESP32  : 
+        
+        ![ESP32](data/ESP32-Pinout.png)
+
+    - An L298N H bridge : 
+        
+        ![L298N](data/L298N.png)
+    
+    - A 11.1 V Lipo battery
+        
+        ![LIPO](data/lipo_battery.jpg)
+
+    - An MPU6050 to extract orientation 
+
+        ![MPU6050](data/MPU6050-Pinout.png)
+
+    - A TOBSUN buck dc-dc converter 
+
+        ![TOBSUN](data/CONVERTER.jpg)
+
+    - Two wheels with encoders
+
+    
 The pinout layout is as follows : 
 ```yaml
 - Left wheel : 
