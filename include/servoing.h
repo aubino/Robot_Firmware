@@ -16,6 +16,7 @@
 #define MAX_I    1000.0
 #define MIN_I   -1000.0
 double PID_P(0) ,PID_I(0) ,  PID_D(0) ; 
+
 double pid_command(double order, double last_speed, double current_speed,double * error_sum)
 {
     double Kp = PID_P ; 
@@ -47,13 +48,6 @@ typedef struct PID_State
         double e_k , e_k_1 , e_k_2 ;  
         double u_k_1 , u_k ; 
     #endif 
-    PID_State(double kp , double ki, double kd,double ts)
-    {
-        proportional_coefficient = kp ; 
-        integral_coefficient = ki ; 
-        derivate_coefficient = kd ; 
-        sampling_interval = ts ; 
-    }
     PID_State() {} ; 
 } PID_State ; 
 
@@ -87,4 +81,13 @@ void updatePID(PID_State* pid_state_ptr,double command,double current_speed)
 
 
 }
+
+void setPIDStateCoefficients(PID_State* pid_state_ptr, double kp , double ki, double kd,double ts)
+{
+    pid_state_ptr->proportional_coefficient = kp ; 
+    pid_state_ptr->integral_coefficient = ki ; 
+    pid_state_ptr->derivate_coefficient = kd ; 
+    pid_state_ptr->sampling_interval = ts ; 
+}
+
 #endif
