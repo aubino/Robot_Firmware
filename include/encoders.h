@@ -10,6 +10,7 @@
 #define MINIMUM_SPEED_TICK_TO_COMPUTE_SPEED 5
 #include <time.h>
 #include "Rotary.h"
+#include "servoing.h"
 #include <math.h>
 #include "freertos/semphr.h"
 #include "esp32-hal-ledc.h"
@@ -76,6 +77,7 @@ typedef struct Wheel
     unsigned int ena ; 
     Rotary _internal_rotary_object ;
     unsigned int minimum_coder_tick_to_compute_speed ;
+    PID_State _internal_pid_state  ; 
     CircularBuffer position_buffer ;
     TimeCircularBuffer timer_buffer ;
     Wheel() ; 

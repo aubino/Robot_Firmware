@@ -28,4 +28,28 @@ double pid_command(double order, double last_speed, double current_speed,double 
     return Kp * error + Ki * (*error_sum) + Kd * derivate;
 }
 
+/// @brief This is a simple structure to keep track of the pid  command structure.
+/// It will directly be integrated into the Wheel data structure and serve as a "private member" 
+/// only acessed when updating the commands to be sent to the wheels and at the initialization. 
+typedef struct PID_State
+{
+    
+    double proportional_coefficient ; 
+    double integral_coefficient     ; 
+    double derivate_coefficient     ; 
+    double sampling_interval        ; // in seconds 
+    double i_k_1 ,i_k               ; 
+    double d_k_1 , d_k              ; 
+    double u_k_1 , u_k              ; 
+    double e_k_1 , e_k              ; 
+    double c_k_1 , c_k              ; 
+    PID_State(double kp , double ki, double kd,double ts)
+    {
+        proportional_coefficient = kp ; 
+        integral_coefficient = ki ; 
+        derivate_coefficient = kd ; 
+        sampling_interval = ts ; 
+    }
+    PID_State() {} ; 
+} PID_State ; 
 #endif
