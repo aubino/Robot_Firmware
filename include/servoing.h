@@ -6,7 +6,6 @@
 //https://www.betzler.physik.uni-osnabrueck.de/Manuskripte/Elektronik-Praktikum/p3/doc2558.pdf gives a good overview of what a numerical pid is 
 // 
 #include <math.h>
-#include "encoders.h"
 #ifndef servoing_h
 #define servoing_h
 #define PID_FREQUENCY 100

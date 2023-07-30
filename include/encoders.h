@@ -1,3 +1,5 @@
+#ifndef encoders_h
+#define encoders_h
 #define WHEEL_POSITION_BUFFER_SIZE 16
 #define MAX_BUFFER_SIZE 20
 #define PWM_RESOLUTION 16 //bits
@@ -16,8 +18,7 @@
 #include "esp32-hal-ledc.h"
 
 
-#ifndef encoders_h
-#define encoders_h
+
 const int  PWM_MAX_VALUE = std::pow(2,PWM_RESOLUTION) - 1 ; 
 
 //#define DEBUG_MODE 
