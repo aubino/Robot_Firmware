@@ -38,11 +38,15 @@ typedef struct PID_State
     double integral_coefficient     ; 
     double derivate_coefficient     ; 
     double sampling_interval        ; // in seconds 
-    double i_k_1 ,i_k               ; 
-    double d_k_1 , d_k              ; 
-    double u_k_1 , u_k              ; 
-    double e_k_1 , e_k              ; 
-    double c_k_1 , c_k              ; 
+    #ifdef DEBUG_PID
+        double i_k                      ; 
+        double d_k                      ; 
+        double u_k_1 , u_k              ; 
+        double e_k_1 , e_k              ; 
+    #else
+        double e_k , e_k_1 , e_k_2 ;  
+        double u_k_1 , u_k ; 
+    #endif 
     PID_State(double kp , double ki, double kd,double ts)
     {
         proportional_coefficient = kp ; 
@@ -52,4 +56,35 @@ typedef struct PID_State
     }
     PID_State() {} ; 
 } PID_State ; 
+
+void updatePID(PID_State* pid_state_ptr,double command,double current_speed)
+{
+    ///@brief implementation of the updating of the pid 
+    /// See https://engineering.stackexchange.com/questions/26537/what-is-a-definitive-discrete-pid-controller-equation for more details
+    
+    #ifdef DEBUG_PID
+        pid_state_ptr->e_k_1 = pid_state_ptr->e_k      ; 
+        pid_state_ptr->e_k   = command - current_speed ;
+        pid_state_ptr->i_k +=  pid_state_ptr->sampling_interval * (pid_state_ptr->e_k + pid_state_ptr->e_k_1) / 2 ;
+        pid_state_ptr->d_k = (pid_state_ptr->e_k - pid_state_ptr->e_k_1) / pid_state_ptr->sampling_interval ; 
+        pid_state_ptr->u_k_1 = pid_state_ptr->u_k ; 
+        pid_state_ptr->u_k = pid_state_ptr->proportional_coefficient * pid_state_ptr->e_k + pid_state_ptr->integral_coefficient * pid_state_ptr->i_k + pid_state_ptr->derivate_coefficient * pid_state_ptr->d_k ; 
+    
+    #else
+        pid_state_ptr->u_k_1 = pid_state_ptr->u_k ; 
+        
+        pid_state_ptr->u_k  += (pid_state_ptr->proportional_coefficient + 
+                                (pid_state_ptr->integral_coefficient * pid_state_ptr->sampling_interval)/2 + 
+                                pid_state_ptr->derivate_coefficient/pid_state_ptr->sampling_interval) * pid_state_ptr->e_k      ;
+        
+        pid_state_ptr->u_k  += (-pid_state_ptr->proportional_coefficient + 
+                                (pid_state_ptr->integral_coefficient * pid_state_ptr->sampling_interval)/2 - 
+                                (2*pid_state_ptr->derivate_coefficient/pid_state_ptr->sampling_interval)) * pid_state_ptr->e_k_1 ; 
+        
+        pid_state_ptr->u_k  += (pid_state_ptr->derivate_coefficient/pid_state_ptr->sampling_interval) * pid_state_ptr->e_k_2    ; 
+
+    #endif
+
+
+}
 #endif
