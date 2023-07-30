@@ -50,9 +50,9 @@ void getRightWheelCommand( const std_msgs::Float64& right_wheel_command_recieved
 
 void modifyPIDParameters(const geometry_msgs::Vector3& PID_parameters)
 {
-  PID_P = PID_parameters.x ; 
-  PID_I = PID_parameters.y ; 
-  PID_D = PID_parameters.z ; 
+  double PID_P = PID_parameters.x ; 
+  double PID_I = PID_parameters.y ; 
+  double PID_D = PID_parameters.z ; 
   setPIDStateCoefficients(&(right_wheel_ptr->_internal_pid_state),PID_P, PID_I , PID_D , 1/DEFAULT_WHEEL_COMMAND_FREQUENCY) ; 
   setPIDStateCoefficients(&(left_wheel_ptr->_internal_pid_state),PID_P, PID_I , PID_D , 1/DEFAULT_WHEEL_COMMAND_FREQUENCY)  ;  
 } 
