@@ -35,8 +35,8 @@ nav_msgs::Odometry odometry ;
 geometry_msgs::Pose2D robot_pose ; 
 ros::Publisher left_wheel_data_publisher("/left_wheel/command/get",&left_wheel_data) ; 
 ros::Publisher right_wheel_data_publisher("/right_wheel/command/get",&right_wheel_data) ;
-// ros::Publisher odometry_publisher("/odom",&odometry) ; 
-// ros::Publisher robot_pose_publisher("/robot/pose",&robot_pose) ; 
+ros::Publisher odometry_publisher("/odom",&odometry) ; 
+ros::Publisher robot_pose_publisher("/robot/pose",&robot_pose) ; 
 
 void getLeftWheelCommand( const std_msgs::Float64& left_wheel_command_recieved)
 {
@@ -53,6 +53,8 @@ void modifyPIDParameters(const geometry_msgs::Vector3& PID_parameters)
   PID_P = PID_parameters.x ; 
   PID_I = PID_parameters.y ; 
   PID_D = PID_parameters.z ; 
+  setPIDStateCoefficients(&(right_wheel_ptr->_internal_pid_state),PID_P, PID_I , PID_D , 1/DEFAULT_WHEEL_COMMAND_FREQUENCY) ; 
+  setPIDStateCoefficients(&(left_wheel_ptr->_internal_pid_state),PID_P, PID_I , PID_D , 1/DEFAULT_WHEEL_COMMAND_FREQUENCY)  ;  
 } 
 
 void setLinearSpeed(const geometry_msgs::Twist& linear_speed)
@@ -79,22 +81,10 @@ void IRAM_ATTR update_wheels_buffers() { updateWheelBuffers(&left_wheel) ; updat
 
 void wheelCommandingTimerCallback(TimerHandle_t xTimer)
 {
-  left_wheel_command = pid_command(left_wheel_ros_command.data,
-                          left_wheel_past_speed,
-                          left_wheel.speed, 
-                          &left_wheel_error_sum) ;
-  right_wheel_command = pid_command(right_wheel_ros_command.data,
-                          right_wheel_past_speed,
-                          right_wheel.speed, 
-                          &right_wheel_error_sum) ;
-  left_wheel_past_speed = left_wheel_ptr->speed ; 
-  right_wheel_past_speed = right_wheel_ptr->speed ; 
-  // applyVoltageToWheel(left_wheel_ptr,left_wheel_command) ; 
-  applyVoltageToWheel(left_wheel_ptr,left_wheel_ros_command.data) ;
-  // applyVoltageToWheel(right_wheel_ptr,right_wheel_ros_command.data) ; 
-  applyVoltageToWheel(right_wheel_ptr,right_wheel_ros_command.data) ;
-  // Serial.print((String)"left_wheel_command : " + left_wheel_command +"\n") ;
-  // Serial.print((String)"right_wheel_command : " + right_wheel_command +"\n") ;
+  updatePID(&(left_wheel_ptr->_internal_pid_state) , left_wheel_ros_command.data, left_wheel_ptr->speed) ; 
+  updatePID(&(right_wheel_ptr->_internal_pid_state) , right_wheel_ros_command.data, right_wheel_ptr->speed) ; 
+  applyVoltageToWheel(left_wheel_ptr,left_wheel_ptr->_internal_pid_state.u_k) ; 
+  applyVoltageToWheel(right_wheel_ptr,right_wheel_ptr->_internal_pid_state.u_k) ; 
 }
 
 void bufferUpdatingTimerCallback(TimerHandle_t xTimer)
@@ -167,8 +157,8 @@ void setup() {
   nh.getHardware()->setConnection(server, serverPort);
   nh.advertise(left_wheel_data_publisher);
   nh.advertise(right_wheel_data_publisher);
-  // nh.advertise(odometry_publisher) ; 
-  // nh.advertise(robot_pose_publisher)
+  nh.advertise(odometry_publisher) ; 
+  nh.advertise(robot_pose_publisher) ; 
   nh.subscribe(pid_param_modification_sub) ; 
   nh.subscribe(left_wheel_command_sub);
   nh.subscribe(right_wheel_command_sub);
