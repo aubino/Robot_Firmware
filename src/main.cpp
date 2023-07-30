@@ -35,8 +35,8 @@ nav_msgs::Odometry odometry ;
 geometry_msgs::Pose2D robot_pose ; 
 ros::Publisher left_wheel_data_publisher("/left_wheel/command/get",&left_wheel_data) ; 
 ros::Publisher right_wheel_data_publisher("/right_wheel/command/get",&right_wheel_data) ;
-ros::Publisher odometry_publisher("/odom",&odometry) ; 
-ros::Publisher robot_pose_publisher("/robot/pose",&robot_pose) ; 
+// ros::Publisher odometry_publisher("/odom",&odometry) ; 
+// ros::Publisher robot_pose_publisher("/robot/pose",&robot_pose) ; 
 
 void getLeftWheelCommand( const std_msgs::Float64& left_wheel_command_recieved)
 {
@@ -67,7 +67,7 @@ void setLinearSpeed(const geometry_msgs::Twist& linear_speed)
 ros::Subscriber<std_msgs::Float64> left_wheel_command_sub("/left_wheel/command/set", &getLeftWheelCommand ); 
 ros::Subscriber<std_msgs::Float64> right_wheel_command_sub("/right_wheel/command/set", &getRightWheelCommand);
 ros::Subscriber<geometry_msgs::Vector3> pid_param_modification_sub("/PID/set", &modifyPIDParameters);
-ros::Subscriber<geometry_msgs::Twist> robot_driving_sub("/robot/cmd_vel",&setLinearSpeed) ; 
+// ros::Subscriber<geometry_msgs::Twist> robot_driving_sub("/robot/cmd_vel",&setLinearSpeed) ; 
 
 
 
@@ -89,9 +89,10 @@ void wheelCommandingTimerCallback(TimerHandle_t xTimer)
                           &right_wheel_error_sum) ;
   left_wheel_past_speed = left_wheel_ptr->speed ; 
   right_wheel_past_speed = right_wheel_ptr->speed ; 
-  applyVoltageToWheel(left_wheel_ptr,left_wheel_command) ; 
-  //applyVoltageToWheel(left_wheel_ptr,6.0) ;
-  applyVoltageToWheel(right_wheel_ptr,right_wheel_command) ; 
+  // applyVoltageToWheel(left_wheel_ptr,left_wheel_command) ; 
+  applyVoltageToWheel(left_wheel_ptr,left_wheel_ros_command.data) ;
+  // applyVoltageToWheel(right_wheel_ptr,right_wheel_ros_command.data) ; 
+  applyVoltageToWheel(right_wheel_ptr,right_wheel_ros_command.data) ;
   // Serial.print((String)"left_wheel_command : " + left_wheel_command +"\n") ;
   // Serial.print((String)"right_wheel_command : " + right_wheel_command +"\n") ;
 }
@@ -109,7 +110,7 @@ void speedUpdatingTimerCallback(TimerHandle_t xTimer)
   /**
    * Before updating the speed, let's compute the odometry first.
   */
-  odometry = computeOdometry(robot_pose,nh.now(),1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
+  // odometry = computeOdometry(robot_pose,nh.now(),1/SPEED_UPDATING_FREQUENCY,left_wheel_ptr->speed,right_wheel_ptr->speed) ; 
   //Now we can update the speed 
   updateWheelSpeed(left_wheel_ptr);
   updateWheelSpeed(right_wheel_ptr);
@@ -166,6 +167,8 @@ void setup() {
   nh.getHardware()->setConnection(server, serverPort);
   nh.advertise(left_wheel_data_publisher);
   nh.advertise(right_wheel_data_publisher);
+  // nh.advertise(odometry_publisher) ; 
+  // nh.advertise(robot_pose_publisher)
   nh.subscribe(pid_param_modification_sub) ; 
   nh.subscribe(left_wheel_command_sub);
   nh.subscribe(right_wheel_command_sub);
@@ -247,8 +250,8 @@ void loop()
 {
   left_wheel_data_publisher.publish(&left_wheel_data) ; 
   right_wheel_data_publisher.publish(&right_wheel_data) ;
-  odometry_publisher.publish(&odometry) ; 
-  robot_pose_publisher.publish(&robot_pose) ;
+  // odometry_publisher.publish(&odometry) ; 
+  // robot_pose_publisher.publish(&robot_pose) ;
   nh.spinOnce();
   delay(uint32_t(1000/ROS_PUBLISHING_FREQUENCY)) ; 
 }
